@@ -1,10 +1,13 @@
 #include "stdio.h"
 #include "math.h"
 
+#define FILTER_RADIUS 2
 
-__global__ void 2D_convolution_kernel(float *N, float *F, float *P, int r, int width, int height){
+//F: Convolution filter array pointer (2D- not linearized)
+__constant__ float F[2*FILTER_RADIUS+1][2*FILTER_RADIUS+1];
+
+__global__ void 2D_convolution_kernel(float *N, float *P, int r, int width, int height){
   //N: Input array pointer (linearlized)
-  //F: Convolution filter array pointer (2D- not linearized)
   //P: Output array pointer (linearized)
   //r: Filter radius (2r+1)
   //width: width of the input/output array
@@ -26,7 +29,9 @@ __global__ void 2D_convolution_kernel(float *N, float *F, float *P, int r, int w
 
 
 int main(){
-
+  float* F_h = (float*)malloc(img_size);
+  //Informs CUDA runtime that the data being copied into constand mem will not be changed during execution
+  cudaMemcpyToSymbol(F,F_h,(2*FILTER_RADIUS+1)*(2*FILTER_RADIUS+1)*(sizeof(float)); 
   dim3 dimBlock(16,16,1);
   dim3 dimGrid(ceil(n/16.0), ceil(n/16.0),1);
   2D_convolution_kernel<<dimGrid,dimBlock>>
